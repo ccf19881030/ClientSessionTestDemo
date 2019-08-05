@@ -5,58 +5,55 @@
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <queue>
-#include "task_queue.h"
 
-//typedef std::function<void()> taskFun;
-//typedef std::queue<taskFun> task;
+#include "task_queue.h"
 
 class CSession :
 	public boost::enable_shared_from_this<CSession>
 {
 public:
 	CSession(const std::string IP, unsigned short port, int m_heartbeat_timer_minutes, 
-				boost::asio::io_service& io_service_);
+				boost::asio::io_context& io_context_);
 	~CSession(void);
 
 private:
 	
-	void receive_handler(const boost::system::error_code &ec, std::size_t bytes_transferred);//½ÓÊÕÊı¾İ´¦Àí½á¹û
-	void connect_handler(const boost::system::error_code &ec); //Á¬½Ó´¦Àí½á¹û
-	void heartbeat_handler(const boost::system::error_code &ec); //ĞÄÌø´¦Àí½á¹û
-	void login_handler(const boost::system::error_code &ec, std::size_t bytes_transferred);//µÇÂ¼½á¹ûµÄ´¦Àí
-	void start_receive();//¿ªÊ¼½ÓÊÕÊı¾İ
+	void receive_handler(const boost::system::error_code &ec, std::size_t bytes_transferred);  //æ¥æ”¶æ•°æ®å¤„ç†ç»“æœ
+	void connect_handler(const boost::system::error_code &ec);     //è¿æ¥å¤„ç†ç»“æœ
+	void heartbeat_handler(const boost::system::error_code &ec);   //å¿ƒè·³å¤„ç†ç»“æœ
+	void login_handler(const boost::system::error_code &ec, std::size_t bytes_transferred);    //ç™»å½•ç»“æœçš„å¤„ç†
+	void start_receive();    //å¼€å§‹æ¥æ”¶æ•°æ®
 	void send_handler(const boost::system::error_code &ec);
-	std::size_t check_frame(const boost::system::error_code &ec, std::size_t bytes_transferred);//Ğ£ÑéÊı¾İ
-	void parse_frame(const boost::system::error_code &ec, std::size_t bytes_transferred);//½âÎöÊı¾İ
+	std::size_t check_frame(const boost::system::error_code &ec, std::size_t bytes_transferred);   //æ ¡éªŒæ•°æ®
+	void parse_frame(const boost::system::error_code &ec, std::size_t bytes_transferred);          //è§£ææ•°æ®
 public:
-	void start_send();//ÆäËûµØ·½µ÷ÓÃÊ± Ö»ĞèÒª°ÑÈÎÎñ¼Óµ½ÈÎÎñ¶ÓÁĞ Ö´ĞĞ io_service_.post(boost::bind(&CSession::start_send, this));
-	void start();//Æô¶¯Í£Ö¹
+	void start_send();   //å…¶ä»–åœ°æ–¹è°ƒç”¨æ—¶ åªéœ€è¦æŠŠä»»åŠ¡åŠ åˆ°ä»»åŠ¡é˜Ÿåˆ— æ‰§è¡Œ io_service_.post(boost::bind(&CSession::start_send, this));
+	void start();        //å¯åŠ¨åœæ­¢
 	void stop();
-	void login();//µÇÂ¼
-	void heartbeat();//ĞÄÌø
+	void login();       //ç™»å½•
+	void heartbeat();   //å¿ƒè·³
 
-	// Éú³ÉĞÄÌø°üÊı¾İ
+	// ç”Ÿæˆå¿ƒè·³åŒ…æ•°æ®
 	String process_hartbeat(String ip, uint16 port, String stCode);
 
-	// Éú³ÉµÇÂ¼Êı¾İ
+	// ç”Ÿæˆç™»å½•æ•°æ®
 	String process_login(String usr, String pwd);
 
 public:
-	task_queue m_task_queue;//Ïß³Ì°²È«µÄÈÎÎñ¶ÓÁĞ
+	task_queue m_task_queue;   //çº¿ç¨‹å®‰å…¨çš„ä»»åŠ¡é˜Ÿåˆ—
 
 	boost::asio::ip::tcp::endpoint m_ep;
 	boost::asio::ip::tcp::socket m_sock;
 	boost::asio::ip::tcp::resolver m_resolver;
 
 
-	boost::array<unsigned char, 4096> read_buffer;
-	boost::array<unsigned char, 4096> write_buffer;
+	boost::array<unsigned char, 4096> read_buffer;		// æ¥æ”¶ç¼“å†²åŒº
+	boost::array<unsigned char, 4096> write_buffer;		// å‘é€ç¼“å†²åŒº
 
 	boost::asio::deadline_timer heartbeat_timer;
-	int m_heartbeat_timer_minutes;//ĞÄÌø¼ä¸ô ÒÔ·ÖÎªµ¥Î»
+	int m_heartbeat_timer_minutes;    //å¿ƒè·³é—´éš” ä»¥åˆ†ä¸ºå•ä½
 
 	int m_nConnectState;
-		
 		
 	int m_nHeartbeatCount;
 };
