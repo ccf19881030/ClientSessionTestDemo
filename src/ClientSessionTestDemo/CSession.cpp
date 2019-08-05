@@ -4,10 +4,10 @@ CSession::CSession(
 	const std::string IP,
 	unsigned short port,
 	int heartbeat_timer_minutes,
-	boost::asio::io_service& io_service_)
-	: m_resolver(io_service_),
-	m_sock(io_service_),
-	heartbeat_timer(io_service_),
+	boost::asio::io_context& io_context_)
+	: m_resolver(io_context_),
+	m_sock(io_context_),
+	heartbeat_timer(io_context_),
 	m_nConnectState(0),
 	m_ep(boost::asio::ip::address::from_string(IP), port),
 	m_heartbeat_timer_minutes(heartbeat_timer_minutes),
@@ -38,9 +38,9 @@ void CSession::stop()
 
 std::size_t CSession::check_frame(const boost::system::error_code &ec, std::size_t bytes_transferred)
 {
-	//bytes_transferred ÒÑ¾­½ÓÊÕµÄ×Ö½ÚÊı
-	//·µ»Ø0 ±íÊ¾ ÑéÖ¤Í¨¹ı
-	//·µ»Ø1 ±íÊ¾ ĞèÒª¼ÌĞøÑéÖ¤
+	//bytes_transferred å·²ç»æ¥æ”¶çš„å­—èŠ‚æ•°
+	//è¿”å›0 è¡¨ç¤º éªŒè¯é€šè¿‡
+	//è¿”å›1 è¡¨ç¤º éœ€è¦ç»§ç»­éªŒè¯
 	return 0;
 }
 void CSession::parse_frame(const boost::system::error_code &ec, std::size_t bytes_transferred)
@@ -64,7 +64,7 @@ void CSession::receive_handler(const boost::system::error_code &ec, std::size_t 
 	if (!ec)
 	{
 
-		//check_frame ÑéÖ¤½ÓÊÕµÄÊı¾İ£¬µ±ÑéÖ¤³É¹¦Ê±£¬¿ªÊ¼
+		//check_frame éªŒè¯æ¥æ”¶çš„æ•°æ®ï¼Œå½“éªŒè¯æˆåŠŸæ—¶ï¼Œå¼€å§‹
 		boost::asio::async_read(m_sock, boost::asio::buffer(read_buffer),
 			boost::bind(&CSession::check_frame,
 				shared_from_this(), boost::asio::placeholders::error,
@@ -94,13 +94,13 @@ void CSession::receive_handler(const boost::system::error_code &ec, std::size_t 
 void CSession::heartbeat()
 {
 	//unsigned char c[256];
-	String heartStr = process_hartbeat("127.0.0.1", 8088, "123456789");//Éú³ÉĞÄÌøÊı¾İ
+	String heartStr = process_hartbeat("127.0.0.1", 8088, "123456789");//ç”Ÿæˆå¿ƒè·³æ•°æ®
 	m_sock.async_write_some(boost::asio::buffer(heartStr.data(), heartStr.size()), 
 		boost::bind(&CSession::heartbeat_handler, shared_from_this(), boost::asio::placeholders::error));
 }
 
 
-// Éú³ÉĞÄÌø°üÊı¾İ
+// ç”Ÿæˆå¿ƒè·³åŒ…æ•°æ®
 String CSession::process_hartbeat(String ip, uint16 port, String stCode)
 {
 	String heartStr = "@@" + ip +  std::to_string(port) + "##" + stCode;
@@ -108,7 +108,7 @@ String CSession::process_hartbeat(String ip, uint16 port, String stCode)
 	return heartStr;
 }
 
-// Éú³ÉµÇÂ¼Êı¾İ
+// ç”Ÿæˆç™»å½•æ•°æ®
 String CSession::process_login(String usr, String pwd)
 {
 	String loginStr = "username:" + usr + "##password:" + pwd;
@@ -131,12 +131,12 @@ void CSession::heartbeat_handler(const boost::system::error_code &ec)
 }
 
 
-void CSession::login()//µÇÂ¼
+void CSession::login()//ç™»å½•
 {
-	//Á¬½ÓÍê³É ·¢ËÍµÇÂ¼Ö¡
+	//è¿æ¥å®Œæˆ å‘é€ç™»å½•å¸§
 	//*******************************************************************************************
 	//unsigned char c[256];
-	//UINT nLen = process_login(c);//Éú³ÉµÇÂ¼Êı¾İ ÀıÈç cÖĞ´æ´¢ÁËÓÃ»§Ãû³ÆºÍÃÜÂëµÈ
+	//UINT nLen = process_login(c);//ç”Ÿæˆç™»å½•æ•°æ® ä¾‹å¦‚ cä¸­å­˜å‚¨äº†ç”¨æˆ·åç§°å’Œå¯†ç ç­‰
 
 	String loginStr = process_login("have", "123456");
 	m_sock.async_write_some(boost::asio::buffer(loginStr.data(), loginStr.size()), 
@@ -149,8 +149,8 @@ void CSession::login_handler(const boost::system::error_code &ec, std::size_t by
 {
 	if (!ec)
 	{
-		start_receive();//Æô¶¯½ÓÊÕ
-		heartbeat();
+		start_receive();  //å¯åŠ¨æ¥æ”¶
+		heartbeat();      // å¯åŠ¨å¿ƒè·³
 	}
 	else
 	{
@@ -165,22 +165,19 @@ void CSession::connect_handler(const boost::system::error_code &ec)
 	{
 		boost::this_thread::sleep(boost::posix_time::microseconds(500));
 
-		login();//Á¬½Ó³É¹¦Ö®ºó¿ªÊ¼µÇÂ¼
+		login();     //è¿æ¥æˆåŠŸä¹‹åå¼€å§‹ç™»å½•
 	}
 	else
 	{
 
 		boost::this_thread::sleep(boost::posix_time::microseconds(60000));
-		start();//Á¬½ÓÊ§°Ü ĞèÒªÔÙ´ÎÁ¬½Ó
-
-
-
+		start();   //è¿æ¥å¤±è´¥ éœ€è¦å†æ¬¡è¿æ¥
 	}
 }
 
 void CSession::start_send()
 {
-	//´ÓÏß³Ì°²È«µÄÈÎÎñ¶ÓÁĞÖĞ»ñÈ¡Ò»¸öÈÎÎñ¿ªÊ¼·¢ËÍ
+	//ä»çº¿ç¨‹å®‰å…¨çš„ä»»åŠ¡é˜Ÿåˆ—ä¸­è·å–ä¸€ä¸ªä»»åŠ¡å¼€å§‹å‘é€
 	std::tuple<bool, task> ret = m_task_queue.get_nonblock();
 	if (std::get<0>(ret))
 	{
@@ -197,6 +194,6 @@ void CSession::send_handler(const boost::system::error_code &ec)
 {
 	if (!ec)
 	{
-		start_send();//ÈÎÎñ¶ÓÁĞ²»Îª¿ÕÊ±£¬¿ªÊ¼·¢ËÍÏÂÒ»¸öÈÎÎñ
+		start_send();//ä»»åŠ¡é˜Ÿåˆ—ä¸ä¸ºç©ºæ—¶ï¼Œå¼€å§‹å‘é€ä¸‹ä¸€ä¸ªä»»åŠ¡
 	}
 }
