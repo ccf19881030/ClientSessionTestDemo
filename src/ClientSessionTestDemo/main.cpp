@@ -4,10 +4,10 @@
 
 using namespace std;
 
-//´´½¨¼Ì³ĞÓÚenable_shared_from_thisÀàµÄ¶ÔÏóÊ±±ØĞëÊ¹ÓÃÖÇÄÜÖ¸Õë
+//åˆ›å»ºç»§æ‰¿äºenable_shared_from_thisç±»çš„å¯¹è±¡æ—¶å¿…é¡»ä½¿ç”¨æ™ºèƒ½æŒ‡é’ˆ
 typedef boost::shared_ptr<CSession> ClientPtr; 
 
-std::vector<ClientPtr> client_list;//´æ´¢Éú³ÉµÄ¿Í»§¶ËÊµÀı
+std::vector<ClientPtr> client_list;   //å­˜å‚¨ç”Ÿæˆçš„å®¢æˆ·ç«¯å®ä¾‹åˆ—è¡¨
 
 int main(int argc, char* argv[])
 {
@@ -17,20 +17,20 @@ int main(int argc, char* argv[])
 
 	std::string IP = "127.0.0.1";
 	unsigned short port = 8104;
-	int heartbeat_timer_minutes = 1;	// ĞÄÌøÊ±¼ä¼ä¸ôÎª1·ÖÖÓ
+	int heartbeat_timer_minutes = 1;	// å¿ƒè·³æ—¶é—´é—´éš”ä¸º1åˆ†é’Ÿ
 
-	int clientNum = 10; // Á¬½Ó¿Í»§¶ËµÄÊıÄ¿
+	int clientNum = 10;                     // è¿æ¥å®¢æˆ·ç«¯çš„æ•°ç›®
 
 	for (int i = 0; i < clientNum; i++)
 	{
 		boost::shared_ptr<CSession> pClientSession(new CSession(IP, port, heartbeat_timer_minutes,
-			io_context_));
-		client_list.push_back(std::move(pClientSession));
-		client_list.at(i)->start();
+			io_context_));   // åˆ›å»ºä¸€ä¸ªå®¢æˆ·ç«¯
+		client_list.push_back(std::move(pClientSession));	// å°†æ–°åˆ›å»ºçš„å®¢æˆ·ç«¯æ·»åŠ åˆ°å®¢æˆ·ç«¯åˆ—è¡¨ä¸­
+		client_list.at(i)->start();    // å¯åŠ¨å®¢æˆ·ç«¯å®ä¾‹
 	}
 	boost::thread thr(boost::bind(&boost::asio::io_service::run, boost::ref(io_context_)));
 
-	//ÖÁÉÙÓĞÒ»¸öÏß³ÌÔËĞĞ
+	//è‡³å°‘æœ‰ä¸€ä¸ªçº¿ç¨‹è¿è¡Œ
 	int thread_count = (std::max)(static_cast<int>(boost::thread::hardware_concurrency()), 1);
 	
 	boost::thread_group threads_;
